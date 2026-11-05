@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'">
+<title>でんき回路</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="導線をつないで、決められた豆電球だけを点ける。直列・並列・ショートが分かる、だれでも同じ1日3問のパズル。">
+<meta name="theme-color" content="#151a2e">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="でんき回路">
+<meta property="og:title" content="でんき回路：いちばん少ない導線で、豆電球を点けられる？">
+<meta property="og:description" content="導線をつないで◎の豆電球だけを点ける。直列・並列・ショートが遊びながら分かる、だれでも同じ1日3問。">
+<meta property="og:url" content="https://satou-aaaaa.github.io/denki-kairo/">
+<meta property="og:image" content="https://satou-aaaaa.github.io/denki-kairo/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="でんき回路：導線をつないで豆電球を点けるパズル">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<style>
+/* 夜の実験室：紺の地に、銅色の導線と黄色い豆電球の明かり */
+:root{
+  --bg:#151a2e; --paper:#1f2640; --paper2:#262e4d; --ink:#eef1fa; --ink2:#a9b1cc; --line:#ffffff24;
+  --beam:#ffd45a; --beam2:#b8861a; --go:#5fd39a; --gold:#ffcf4a; --bad:#ff7a7a;
+  --f-body:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-weight:500;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:460px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 28px;display:flex;flex-direction:column;gap:12px;min-height:100%;box-sizing:border-box}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px}
+h1{font-weight:800;font-size:21px;margin:0;letter-spacing:.04em}
+h1 small{font-size:12px;letter-spacing:0;color:var(--ink2);margin-left:8px;font-weight:500}
+.icon{all:unset;cursor:pointer;font-size:18px;min-width:44px;height:44px;display:grid;place-items:center;border-radius:12px;border:1px solid var(--line);box-sizing:border-box;padding:0 8px;background:var(--paper)}
+.icon:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--beam);outline-offset:2px}
+.dots{display:flex;gap:6px;flex:1;max-width:120px}
+.dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.dots i.on{background:var(--beam)}.dots i.done{background:var(--ink2)}
+button.main,a.main{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:16px;background:var(--beam);color:#2a2205;font-weight:800;font-size:17px;padding:0 16px;text-align:center;box-shadow:0 4px 0 var(--beam2)}
+button.main:active{transform:translateY(2px);box-shadow:0 2px 0 var(--beam2)}
+button.main.alt{background:#7aa7ff;color:#0e1a33;box-shadow:0 4px 0 #3d63b0}
+button.sub,a.sub{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:14px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-weight:800;font-size:15px;padding:0 12px;text-align:center}
+button.sub:disabled{opacity:.4;cursor:default}
+.row{display:flex;gap:10px}.row>.sub,.row>.main{flex:1 1 0}
+.note{color:var(--ink2);font-size:13px;line-height:1.6;margin:0;text-align:center}
+.note a{color:var(--beam);display:inline-flex;align-items:center;min-height:44px}
+/* 回路の盤 */
+.ask{text-align:center;font-size:14px;font-weight:800;margin:0;color:var(--ink2)}
+.board{background:#0e1222;border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 24px #0008 inset;touch-action:manipulation;user-select:none;-webkit-user-select:none;overflow:hidden}
+.board svg{display:block;width:100%;height:auto}
+.board .hit{fill:transparent;cursor:pointer}
+.board .hit:focus-visible{outline:none;fill:#ffd45a22}
+.board.win .bulb.lit circle{stroke:#fff}
+.status .warn{color:var(--bad)}
+.tip{color:var(--ink)}
+/* 色の見分けを助ける：◎と×は形でも分かる。ショートの導線は破線にして、赤を見なくても分かるようにする */
+html.a11y-cvd .board .wires.short line{stroke-dasharray:6 5}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:center;font-size:12px;color:var(--ink2)}
+.legend b{font-weight:800}
+.status{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--ink2);min-height:22px}
+.verdict{background:var(--paper);border:2px solid var(--beam);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 6px 0 #0006;animation:up .35s ease-out}
+@keyframes up{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.verdict .hd{display:flex;justify-content:center;align-items:baseline;gap:10px;font-size:22px;font-weight:800}
+.stars{color:var(--gold);letter-spacing:.1em;font-size:20px}
+.stars .off{color:#ffffff2e}
+/* ホーム */
+.title{font-weight:800;font-size:36px;letter-spacing:.08em;text-align:center;margin:4px 0 0;text-shadow:0 0 18px #ffd45a66}
+.lead{text-align:center;color:var(--ink2);margin:0;font-size:14px;line-height:1.7}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats div{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+.stats b{display:block;font-size:20px}
+.stats small{color:var(--ink2);font-size:12px}
+.rank{text-align:center;font-size:13px;color:var(--beam)}
+.share{background:var(--paper);border-radius:14px;padding:12px;white-space:pre-line;font-size:15px;line-height:1.6;text-align:center;border:1px solid var(--line)}
+.shares{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.shares a,.shares button{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:14px;font-weight:800;text-decoration:none;padding:0 6px;box-sizing:border-box;font-family:inherit;cursor:pointer}
+.big{font-weight:800;font-size:24px;text-align:center;margin:0}
+.res{display:flex;flex-direction:column;gap:6px}
+.res div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+.lv{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.res .no{color:var(--ink2)} /* 薄くするのは色で（opacity だと字が 4.5:1 を切る。見やすさの検査 2026-11-06） */
+dialog{border:none;border-radius:18px;background:var(--paper);color:var(--ink);max-width:400px;width:calc(100% - 32px);padding:20px;box-sizing:border-box}
+dialog::backdrop{background:#000000bb}
+dialog h2{margin:0 0 10px;letter-spacing:.06em}
+dialog ol{padding-left:1.3em;margin:0 0 12px;line-height:1.8}
+dialog p{margin:0 0 10px;font-size:14px;line-height:1.7;color:var(--ink2)}
+dialog a{color:var(--beam);min-height:44px;display:inline-flex;align-items:center}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#f3f5fb;color:#151a2e;padding:10px 16px;border-radius:12px;font-weight:800;z-index:9;box-shadow:0 6px 20px #0008;max-width:90%;text-align:center}
+footer{margin-top:auto;text-align:center;font-size:12px;color:var(--ink2);display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+footer a{color:var(--ink2);min-height:44px;display:inline-flex;align-items:center}
+.achs{display:flex;flex-direction:column;gap:8px}
+.achs div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.achs div.got{border-color:var(--gold);background:#2c2a20}
+.achs b{font-size:15px}.achs div.got b{color:var(--gold)}
+.achs small{font-size:12px;color:var(--ink2)}
+.achs i{display:block;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--go) var(--p),var(--line) var(--p))}
+.newach{border:1px solid var(--gold);background:#2c2a20;font-weight:800;border-radius:14px;padding:12px;text-align:center;font-size:15px;line-height:1.6}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<script src="transfer.js" data-game="denki-kairo" data-keys="denki-kairo-v1"></script>
+<!-- a11y:begin 見やすさの設定 v4（shared-workflows template/a11y/a11y.html の写し。ここでは直さず、ひな形を直して全部のゲームへ写す。drift-check と qa/a11y.mjs が同じ中身か見る） -->
+<style id="a11y-css">
+/* だれでも：キーボードで選んだ所に太い枠（WCAG 2.4.7・2.4.13） */
+:is(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #1a5fd0!important;outline-offset:2px!important;box-shadow:0 0 0 5px #fff!important}
+/* 読みやすい文字：UD フォント・行間 1.7・字間を少し広げる・斜体にしない（BDA Dyslexia Style Guide） */
+html.a11y-read body{line-height:1.7}
+html.a11y-read body,html.a11y-read body :where(*:not(svg):not(svg *):not([data-a11y-keepfont]):not([data-a11y-keepfont] *)){font-family:"BIZ UDPGothic","BIZ UDGothic","UD デジタル 教科書体 NK-R","UD Digi Kyokasho NK-R","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif!important;font-style:normal!important}
+html.a11y-read :is(p,li,dd,dt,blockquote,[data-a11y-say]){line-height:1.8!important;letter-spacing:.04em!important}
+html.a11y-read em,html.a11y-read i:not([aria-hidden]){font-style:normal!important;font-weight:700}
+/* 動きを減らす：揺れ・点滅・すべる動きを止める（WCAG 2.3.3。端末の「視差効果を減らす」でも自動で入る） */
+html.a11y-calm *,html.a11y-calm *::before,html.a11y-calm *::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0s!important;scroll-behavior:auto!important}
+/* 色の見分けを助ける：ゲームごとの形・模様は各ゲームが html.a11y-cvd の下に書く。ここではリンクに下線 */
+html.a11y-cvd a{text-decoration:underline!important}
+/* ふりがな：ゲームが <ruby class="a11y-rb"> を置いた所だけ。選んだときだけ出す */
+html:not(.a11y-ruby) ruby.a11y-rb>rt{display:none}
+/* 設定の画面（どのゲームでも同じ見た目・同じ濃さ。白地に黒で 15:1） */
+.a11y-dlg{max-width:min(420px,calc(100vw - 32px));width:100%;box-sizing:border-box;border:2px solid #1d2320;border-radius:14px;padding:18px 16px 14px;background:#fffdf8;color:#1d2320;font:500 16px/1.6 "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;letter-spacing:0}
+.a11y-dlg::backdrop{background:#0008}
+.a11y-dlg h2{font-size:19px;margin:0 0 4px;font-weight:700;line-height:1.4}
+.a11y-dlg p{margin:4px 0 10px;font-size:14px;color:#3d4440;line-height:1.6}
+.a11y-dlg label{display:flex;gap:12px;align-items:center;min-height:48px;padding:6px 4px;border-top:1px solid #1d232022;cursor:pointer;line-height:1.4}
+.a11y-dlg label small{display:block;font-size:13px;color:#3d4440}
+.a11y-dlg input[type=checkbox]{width:26px;height:26px;flex:none;accent-color:#1a5fd0;margin:0}
+.a11y-dlg .a11y-row{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.a11y-dlg button,.a11y-btn,.a11y-saybtn{min-height:44px;min-width:44px;border-radius:10px;border:2px solid #1d2320;background:#fff;color:#1d2320;font:700 15px/1.2 "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;padding:0 14px;cursor:pointer;letter-spacing:0}
+.a11y-dlg button.a11y-ok{background:#1d2320;color:#fff}
+.a11y-btn.a11y-float{position:fixed;left:max(8px,env(safe-area-inset-left,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));z-index:2147483000}
+/* 読み上げボタンが、いちばん下のボタン・リンクにかぶらないよう下をあける */
+html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!important}
+.a11y-saybtn{position:fixed;right:max(8px,env(safe-area-inset-right,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));z-index:2147483000;box-shadow:0 2px 8px #0003}
+.a11y-saybtn[hidden],.a11y-dlg [hidden]{display:none!important}
+.a11y-note{font-size:13px!important}
+</style>
+<script id="a11y-script">
+/* 見やすさの設定（色覚・ディスレクシア・弱視・動きに弱い人のため）。外へは何も送らない。
+   設定は localStorage の a11y-v1 に置く。同じサイト（satou-aaaaa.github.io）のゲームは同じ設定を使う。
+   ゲームの側でできること：
+   - 設定を開くボタンに data-a11y-open を付ける（無ければ左下に「Aa」のボタンを出す）
+   - 読み上げる文に data-a11y-say を付ける（問題文・知らせなど）
+   - 色の見分けを助ける形・模様は html.a11y-cvd の下に CSS で書く。JS では A11y.on('cvd')
+   - 揺れ・すべる動きを JS で動かすときは、A11y.on('calm') なら止める
+   - 設定が変わると document に a11ychange が届く
+   - 設定の印は html の class「a11y-<設定の名前>」（a11y-read など）。部品の class はこれと重ならない名前にする（2026-11-05 a11y-say がボタンとぶつかった） */
+(() => {
+  const KEY = "a11y-v1";
+  const root = document.documentElement;
+  const OPTS = [
+    ["read", "読みやすい文字", "UD フォント・行間と字間を広く"],
+    ["cvd", "色の見分けを助ける", "色に形・模様・記号を足す"],
+    ["calm", "動きを減らす", "揺れ・点滅・すべる動きを止める"],
+    ["say", "読み上げのボタンを出す", "問題や知らせを声で読む（端末の中の声だけ）"],
+    ["ruby", "ふりがなを出す", "むずかしい漢字に読みを付ける"],
+  ];
+  const media = (q) => { try { return matchMedia(q).matches; } catch { return false; } };
+  let S = {};
+  try { S = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch { S = {}; }
+  // 決めていないものは端末の設定に合わせる（視差効果を減らす → 動きを減らす）
+  const on = (k) => (k in S ? !!S[k] : k === "calm" ? media("(prefers-reduced-motion: reduce)") : false);
+  let fontLoaded = false;
+  const loadFont = () => {
+    if (fontLoaded) return; fontLoaded = true;
+    // Google Fonts を許しているページだけ取りに行く（許していなければ端末にある UD フォントを使う）
+    const csp = (document.querySelector('meta[http-equiv="Content-Security-Policy"]') || {}).content || "";
+    if (csp && !/fonts\.googleapis\.com/.test(csp)) return;
+    const l = document.createElement("link");
+    l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap";
+    document.head.appendChild(l);
+  };
+  const apply = () => {
+    for (const [k] of OPTS) root.classList.toggle("a11y-" + k, on(k));
+    if (on("read")) loadFont();
+    if (sayBtn) sayBtn.hidden = !on("say");
+    if (!on("say")) stop();
+  };
+  const set = (k, v) => {
+    S[k] = !!v;
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* 保存できなくても今の画面には効かせる */ }
+    apply();
+    document.dispatchEvent(new CustomEvent("a11ychange", { detail: { key: k, on: !!v } }));
+  };
+
+  // 読み上げ：端末の中の日本語の声だけを使う（外へ文字を送る声は使わない）
+  const voice = () => { try { return speechSynthesis.getVoices().find((v) => /^ja/i.test(v.lang) && v.localService) || null; } catch { return null; } };
+  const stop = () => { try { speechSynthesis.cancel(); } catch { /* 無い端末 */ } };
+  const visible = (el) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && !el.closest("[hidden],[aria-hidden=true],[inert]"); };
+  const textOf = (sel) => [...document.querySelectorAll(sel)].filter(visible).map((el) => (el.getAttribute("aria-label") || el.innerText || "").trim()).filter(Boolean).join("。");
+  // data-a11y-say が無い画面では、見出しと知らせの場所を読む（2026-11-05 何も読まれず設定が開くだけだった）
+  const sayText = () => textOf("[data-a11y-say]") || textOf("h1,h2,[role=status],[aria-live]");
+  const say = (text) => {
+    const v = voice();
+    if (!v || !text) return false;
+    stop();
+    const u = new SpeechSynthesisUtterance(text.slice(0, 600));
+    u.voice = v; u.lang = v.lang; u.rate = 0.95;
+    speechSynthesis.speak(u);
+    return true;
+  };
+
+  let dlg = null, sayBtn = null, lastFocus = null;
+  const build = () => {
+    dlg = document.createElement("dialog");
+    dlg.className = "a11y-dlg";
+    dlg.setAttribute("aria-labelledby", "a11y-h");
+    const hasRuby = !!document.querySelector("ruby.a11y-rb");
+    dlg.innerHTML = `<h2 id="a11y-h">見やすさ・読みやすさ</h2><p>ほかのゲームにも同じ設定が使われます。文字は2本の指で広げると大きくなります。</p>` +
+      OPTS.filter(([k]) => k !== "ruby" || hasRuby).map(([k, n, d]) => `<label><input type="checkbox" data-k="${k}"><span>${n}<small>${d}</small></span></label>`).join("") +
+      `<p class="a11y-note" id="a11y-novoice" hidden>この端末には、外へ送らずに読める日本語の声がありません。</p><div class="a11y-row"><button type="button" class="a11y-ok" data-a11y-close>閉じる</button></div>`;
+    document.body.appendChild(dlg);
+    dlg.addEventListener("change", (e) => {
+      const k = e.target.dataset && e.target.dataset.k;
+      if (!k) return;
+      set(k, e.target.checked);
+      if (k === "say") dlg.querySelector("#a11y-novoice").hidden = !(e.target.checked && !voice());
+    });
+    dlg.querySelector("[data-a11y-close]").addEventListener("click", () => dlg.close());
+    dlg.addEventListener("close", () => { if (lastFocus && lastFocus.focus) lastFocus.focus(); });
+    sayBtn = document.createElement("button");
+    sayBtn.type = "button"; sayBtn.className = "a11y-saybtn"; sayBtn.textContent = "🔊 読む"; sayBtn.setAttribute("aria-label", "画面の問題を読み上げる");
+    sayBtn.addEventListener("click", () => {
+      try { if (speechSynthesis.speaking) return stop(); } catch { /* 無い端末 */ }
+      if (!say(sayText())) open();
+    });
+    document.body.appendChild(sayBtn);
+    if (!document.querySelector("[data-a11y-open]")) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "a11y-btn a11y-float"; b.textContent = "Aa"; b.setAttribute("data-a11y-open", ""); b.setAttribute("aria-label", "見やすさの設定");
+      document.body.appendChild(b);
+    }
+    document.addEventListener("click", (e) => { const t = e.target.closest && e.target.closest("[data-a11y-open]"); if (t) { e.preventDefault(); open(); } });
+    apply();
+  };
+  const open = () => {
+    if (!dlg) build();
+    lastFocus = document.activeElement;
+    for (const c of dlg.querySelectorAll("input[data-k]")) c.checked = on(c.dataset.k);
+    dlg.querySelector("#a11y-novoice").hidden = !(on("say") && !voice());
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+  };
+  apply();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build); else build();
+  window.A11y = { on, set, open, say, stop };
+})();
+</script>
+<!-- a11y:end -->
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<dialog id="howto" aria-labelledby="howto-t">
+  <h2 id="howto-t">遊び方</h2>
+  <ol>
+    <li>ますを押すと導線を置けます。もう一度押すとはずれます。</li>
+    <li>となりどうしの導線はつながります。電池の＋から豆電球を通って−へ戻る道ができると、電気が流れます。</li>
+    <li>◎の豆電球を全部点け、×の豆電球は消したままにできたら「スイッチを入れる」。</li>
+  </ol>
+  <p>豆電球は、両はしの口が導線につながっていないと点きません。2つの豆電球を一本道でつなぐ（直列）と暗くなり、別々の道でつなぐ（並列）と明るいままです。</p>
+  <p>豆電球を通らずに＋と−が導線だけでつながると「ショート」です。電気が一度にたくさん流れて電池や導線が熱くなり、豆電球は点きません（本物でも危ないのでしないでください）。豆電球の両はしを導線でつなぐと、電気はそちらを通って豆電球は消えます。</p>
+  <p>いちばん少ない導線で点けてヒントも使わなければ★3つ。いちばん少ない数は問題の上に出ています。今日の3問はだれでも同じで1日1回。時間制限はありません。</p>
+  <p>小学4年の理科「電流のはたらき」で学ぶ回路を、パズルにしました。豆電球はどれも同じものとして計算しています。</p>
+  <p><a id="fb2" target="_blank" rel="noopener">感想を送る</a></p>
+  <button class="main" id="howto-ok" style="width:100%">わかった</button>
+</dialog>
+<script src="gen.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id), app = $("app");
+const SITE = "https://satou-aaaaa.github.io/denki-kairo/";
+const FEEDBACK = "https://github.com/satou-aaaaa/denki-kairo/issues/new?template=feedback.yml";
+const KEY = "denki-kairo-v1", EPOCH = "2026-11-06";
+const T = window.DNK, LVS = [...T.SIZES, T.HARD];
+
+// ---- 日付と種（日本時間。だれでも同じ3問）----
+const jstNow = () => new Date(Date.now() + 9 * 3600e3);
+const todayKey = () => jstNow().toISOString().slice(0, 10);
+const dayNo = (k) => Math.round((Date.parse(k) - Date.parse(EPOCH)) / 864e5) + 1;
+// 今日の3問：豆電球1こ・2こ・消したまま。上級：2つ（ヒントなし）
+const dailyList = (k) => [0, 1, 2].map((lv) => ({ lv, seed: T.seedOf(k + ":d:" + lv) }));
+const hardList = (k) => [0, 1].map((j) => ({ lv: 3, seed: T.seedOf(k + ":h:" + j) }));
+const cache = new Map();
+const probOf = (it) => { const id = it.lv + ":" + it.seed; if (!cache.has(id)) cache.set(id, T.make(it.seed, LVS[it.lv])); return cache.get(id); };
+// ★：いちばん少ない導線で3、2本多いまで2、それより多いと1。ヒント1回ごとに1つ減らす（最低1）
+const starsOf = (r) => Math.max(1, (r.m <= 0 ? 3 : r.m <= 2 ? 2 : 1) - (r.h || 0));
+const starStr = (s) => `<span class="stars" aria-label="星${s}つ">${"★".repeat(s)}<span class="off">${"★".repeat(3 - s)}</span></span>`;
+
+// ---- 記録（この端末の localStorage だけ）----
+// 進行中の遊びはモードごとに分けて持つ（練習を始めても今日・上級の途中経過を消さない）。cnt・perf：種類ごとの点けた数・いちばん少ない導線で点けた数
+const fresh = () => ({ v: 1, days: {}, hdays: {}, cnt: {}, perf: {}, total: 0, runs: {}, tut: false, kofi: {}, ach: {}, learn: {} });
+let MODE = "d";
+let mem = null; // 保存できない環境では、開いているあいだだけここに置く
+// 保存に失敗したあとはメモリと保存の両方を読む。記録（日ごとの結果・回路帳）は合わせて数は高いほう、途中経過は同じ日・同じ問題なら進んだほう（同じだけ進んでいたらヒントの数は多いほう）
+const doneOf = (r) => !!r && r.res.length >= r.list.length, recOf = (r) => ({ r: r.res.map((x) => ({ m: x.m, h: x.h })) });
+// 終わった今日・上級の回を日ごとの記録に入れる（結果を見る前に別のタブが次の日を保存しても、終えた日を失わない）
+function bank(s, r) { const b = doneOf(r) ? (r.mode === "d" ? s.days : r.mode === "h" ? s.hdays : null) : null; if (!b || b[r.date]) return false; b[r.date] = recOf(r); return true; }
+// ヒントの導線を合わせる：other にだけあるヒントのますを to に写し、ヒントの数は多いほう。ヒントは2つまで（valid と同じ上限）
+function mergeHint(to, other) { if (!to || !other || !Array.isArray(other.hint) || !Array.isArray(to.hint) || !to.put || !other.put) return to; for (const h of other.hint) { if (to.hint.length >= 2) break; if (to.hint.some((x) => x[0] === h[0] && x[1] === h[1])) continue; if (!other.put[h[0]] || !other.put[h[0]][h[1]] || !to.put[h[0]]) continue; to.put[h[0]][h[1]] = 1; to.hint.push([h[0], h[1]]); } to.hints = Math.min(2, Math.max(to.hints || 0, other.hints || 0, to.hint.length)); return to; }
+function load() { let a = null, b = null; try { b = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {} if (a && a.v !== 1) a = null; if (b && b.v !== 1) b = null; if (!a || !b) return Object.assign(fresh(), a || b || {}); const [n, o] = (a.t || 0) >= (b.t || 0) ? [a, b] : [b, a]; const s = Object.assign(fresh(), n); for (const k in o) { if (k === "runs" || k === "t") continue; const x = o[k], y = n[k]; if (x && y && typeof x === "object" && typeof y === "object") { s[k] = Object.assign({}, x, y); for (const q in x) if (typeof x[q] === "number" && typeof y[q] === "number") s[k][q] = Math.max(x[q], y[q]); } else if (typeof x === "number" && typeof y === "number") s[k] = Math.max(x, y); else if (x === true) s[k] = true; } const ra = a.runs || {}, rb = b.runs || {}, prog = (r) => (r.res ? r.res.length : 0) * 1e6 + (r.cur && r.cur.moves ? r.cur.moves : 0), idOf = (r) => JSON.stringify([r.list || null, r.id || null]); s.runs = Object.assign({}, n.runs); for (const m of new Set([...Object.keys(ra), ...Object.keys(rb)])) { const x = ra[m], y = rb[m]; if (x === undefined || y === undefined) { if (x || y) s.runs[m] = x || y; continue; } if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r)) continue; const bd = r.mode === "d" ? s.days : r.mode === "h" ? s.hdays : null; if (bd && !bd[r.date]) s.runs[m] = r; continue; } if (x.date !== y.date) { const [w, l] = x.date > y.date ? [x, y] : [y, x]; bank(s, l); s.runs[m] = w; } else if (idOf(x) === idOf(y)) { const px = prog(x), py = prog(y); s.runs[m] = px > py ? x : py > px ? y : n.runs[m]; if (x.cur && y.cur && x.cur.i === y.cur.i) { const w = s.runs[m], l = w === x ? y : x; s.runs[m] = Object.assign({}, w, { cur: mergeHint(JSON.parse(JSON.stringify(w.cur)), l.cur) }); } } } return s; }
+// 保存の前に読み直す（別のタブで進めた記録を消さない）
+function save(fn) { const s = load(); fn(s); s.t = Math.max(Date.now(), (s.t || 0) + 1); const j = JSON.stringify(s); try { localStorage.setItem(KEY, j); mem = null; } catch (e) { mem = j; } return s; }
+const prevDay = (k) => new Date(Date.parse(k) - 864e5).toISOString().slice(0, 10);
+function streak(days) { let k = todayKey(), n = 0; if (!days[k]) k = prevDay(k); while (days[k]) { n++; k = prevDay(k); } return n; }
+const RANKS = [[0, "見習い"], [10, "配線係"], [40, "回路の職人"], [120, "電気の名人"], [300, "伝説の技師"]];
+const rankOf = (n) => RANKS.filter((r) => n >= r[0]).pop()[1];
+const nextRank = (n) => RANKS.find((r) => r[0] > n);
+// 実績：腕前（ぴったり・ヒントなし・上級）は今日の3問と上級の記録だけで数え、練習は回路帳の数にだけ入る。learn：回路のしくみに出会った回数（練習も数える）
+const one = (r) => r.m <= 0 && !r.h;
+function maxStreak(days) { const ks = Object.keys(days).sort(); let best = 0, run = 0, prev = null; for (const k of ks) { run = prev && Date.parse(k) - Date.parse(prev) === 864e5 ? run + 1 : 1; best = Math.max(best, run); prev = k; } return best; }
+function achList(s) {
+  const okR = (x) => x && Array.isArray(x.r) && x.r.every((r) => r && typeof r.m === "number"), D = Object.values(s.days).filter(okR), H = Object.values(s.hdays).filter(okR), all = D.concat(H).flatMap((x) => x.r), L = s.learn || {};
+  return [
+    ["はじめての明かり", "豆電球を1回点ける", s.total, 1],
+    ["ショートに気づく", "ショートさせて、豆電球が点かないのを見る", L.short || 0, 1],
+    ["直列の明るさ", "直列につないだ暗い豆電球で、回路を完成させる", L.series || 0, 1],
+    ["並列の明るさ", "並列につないだ豆電球を2こ明るく点けて、回路を完成させる", L.parallel || 0, 1],
+    ["ぴったりの感覚", "今日の3問・上級で、いちばん少ない導線（ヒントなし）を10回", all.filter(one).length, 10],
+    ["ぴったり名人", "今日の3問・上級で、いちばん少ない導線（ヒントなし）を50回", all.filter(one).length, 50],
+    ["三つともぴったり", "今日の3問を全部いちばん少ない導線で終える", D.filter((x) => x.r.every(one)).length, 1],
+    ["ヒントなしの一週間", "ヒントを使わずに今日の3問を終えた日が7日", D.filter((x) => x.r.every((r) => !r.h)).length, 7],
+    ["上級に挑む", "上級を終える", H.length, 1],
+    ["上級の技師", "上級の2つともいちばん少ない導線で点ける", H.filter((x) => x.r.length >= 2 && x.r.every(one)).length, 1],
+    ["三日つづけて", "3日続けて今日の3問を終える", maxStreak(s.days), 3],
+    ["一週間つづけて", "7日続けて今日の3問を終える", maxStreak(s.days), 7],
+    ["消したままの達人", "×の豆電球がある回路を、いちばん少ない導線で20回（練習も数える）", (s.perf[2] || 0) + (s.perf[3] || 0), 20],
+    ["百の回路", "回路を100回完成させる", s.total, 100],
+  ].map(([name, desc, cur, goal]) => ({ name, desc, cur: Math.min(cur, goal), goal, done: cur >= goal }));
+}
+const achDone = (s) => achList(s).filter((a) => a.done).map((a) => a.name);
+
+// ---- 画面 ----
+const md = (k) => `${+k.slice(5, 7)}/${+k.slice(8, 10)}`;
+function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }
+const buzz = (n = 12) => { try { navigator.vibrate && navigator.vibrate(n); } catch (e) {} };
+const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const footer = () => `<footer><a href="#" id="f-how">遊び方</a><a href="#" data-a11y-open>見やすさ</a><a href="#" data-hk>引き継ぎ</a><a href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`;
+function bindFooter() { const h = $("f-how"); if (h) h.onclick = (e) => { e.preventDefault(); openHow(); }; }
+function openHow() { $("fb2").href = FEEDBACK; const d = $("howto"); if (d.showModal) d.showModal(); else d.setAttribute("open", ""); }
+$("howto-ok").onclick = () => { const d = $("howto"); d.close ? d.close() : d.removeAttribute("open"); save((s) => { s.tut = true; }); };
+// ホームの小さな回路（飾り）：電池と豆電球2こを並列につないだ形
+const DEMO = `<svg viewBox="0 0 220 110" width="220" height="110" aria-hidden="true" style="display:block;margin:0 auto"><g fill="none" stroke="#e8a25a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><polyline points="40,30 40,12 180,12 180,40"/><polyline points="40,80 40,98 180,98 180,70"/><polyline points="110,12 110,40"/><polyline points="110,98 110,70"/></g><rect x="26" y="34" width="28" height="42" rx="6" fill="#2d3550" stroke="#9aa6c8" stroke-width="2"/><text x="40" y="50" fill="#ffd45a" font-size="15" font-weight="800" text-anchor="middle">+</text><text x="40" y="70" fill="#9aa6c8" font-size="15" font-weight="800" text-anchor="middle">−</text><g style="filter:drop-shadow(0 0 8px #ffe27a)"><circle cx="110" cy="55" r="15" fill="#ffe27a" stroke="#fff" stroke-width="2"/><circle cx="180" cy="55" r="15" fill="#ffe27a" stroke="#fff" stroke-width="2"/></g></svg>`;
+
+function home() {
+  const s = load(), k = todayKey(), done = s.days[k], hdone = s.hdays[k];
+  for (const m of ["d", "h"]) { const r = s.runs[m]; if (r && r.res.length >= r.list.length) { MODE = m; return finish(); } }
+  const nr = nextRank(s.total);
+  const rd = s.runs.d && s.runs.d.date === k ? s.runs.d : null, rh = s.runs.h && s.runs.h.date === k ? s.runs.h : null;
+  app.innerHTML = `
+    <h1 class="title">でんき回路</h1>
+    ${DEMO}
+    <p class="lead">導線をつないで、◎の豆電球だけを点けよう。<br>直列・並列・ショートが遊びながら分かる。<br>だれでも同じ1日3問。</p>
+    ${done ? `<div class="share">今日の結果　${done.r.map(sq).join("")}</div>` : ""}
+    <button class="main" id="go-d">${done ? "今日の結果を見る" : rd ? `続きから（${rd.res.length + 1}問目）` : `今日の3問を解く <small>#${dayNo(k)}</small>`}</button>
+    ${done ? `<button class="main alt" id="go-h">${hdone ? "上級の結果を見る" : rh ? "上級の続きから" : "上級：消す豆電球が2こ（ヒントなし）"}</button>` : ""}
+    <div class="row"><button class="sub" id="go-p">練習（何度でも）</button><button class="sub" id="go-dex">回路帳 ${s.total}こ</button></div>
+    <button class="sub" id="go-ach">実績 ${achDone(s).length}/${achList(s).length}</button>
+    <div class="stats"><div><b>${streak(s.days)}</b><small>連続の日</small></div><div><b>${Object.keys(s.days).length}</b><small>遊んだ日</small></div><div><b>${s.total}</b><small>点けた回路</small></div></div>
+    <p class="rank">称号：${rankOf(s.total)}${nr ? `（あと${nr[0] - s.total}こで${nr[1]}）` : ""}</p>
+    ${footer()}`;
+  $("go-d").onclick = () => (k !== todayKey() ? home() : done ? result("d", k) : startRun("d")); // 画面を開いたまま0時を過ぎたら、今日の状態に描き直す
+  if ($("go-h")) $("go-h").onclick = () => (hdone ? result("h", k) : k === todayKey() ? startRun("h") : home()); // 画面を開いたまま0時を過ぎたら、翌日の上級は始めない
+  $("go-p").onclick = practiceMenu;
+  $("go-dex").onclick = dex;
+  $("go-ach").onclick = ach;
+  bindFooter();
+  if (!s.tut) openHow();
+}
+const lvNote = (L, i) => `${L.W}×${L.H}・◎${L.on}${L.off ? `・×${L.off}` : ""}${i >= 3 ? "・ヒントなし" : ""}`;
+function practiceMenu() {
+  app.innerHTML = `<header><button class="icon" id="back" aria-label="もどる">←</button><h1>練習<small>今日の記録には入りません（回路帳には載ります）</small></h1><span></span></header>
+    <p class="note">種類を選ぶと、新しい回路が出ます。</p>
+    <div class="lv">${LVS.map((L, i) => `<button class="sub" data-lv="${i}" style="min-height:64px">${L.name}<br><small>${lvNote(L, i)}</small></button>`).join("")}</div>${footer()}`;
+  $("back").onclick = home;
+  document.querySelectorAll(".lv button").forEach((b) => (b.onclick = () => startRun("p", +b.dataset.lv)));
+  bindFooter();
+}
+function startRun(mode, opt) {
+  const k = todayKey();
+  save((s) => {
+    if (mode !== "p" && s.runs[mode] && s.runs[mode].date === k) return; // 続きから
+    if ((mode === "d" && s.days[k]) || (mode === "h" && s.hdays[k])) return; // 別のタブで今日の分を終えていたら、もう一度は始めない（ホームに戻る）
+    const list = mode === "d" ? dailyList(k) : mode === "h" ? hardList(k) : [{ lv: opt, seed: Math.floor(Math.random() * 2 ** 31) }];
+    s.runs[mode] = { mode, date: k, list, res: [], cur: null, id: Date.now().toString(36) };
+  });
+  MODE = mode;
+  play();
+}
+
+// 今の問題：{ i, date, id, p, put:[[0|1]]（置いた導線）, hint:[[段,列]]（ヒントで置いた導線）, hints, moves, done, hard, hist }
+let cur = null;
+const has = (list, r, c) => list.some((x) => x[0] === r && x[1] === c);
+const emptyPut = (p) => [...Array(p.H)].map(() => Array(p.W).fill(0));
+function play() {
+  const s = load(), run = s.runs[MODE];
+  if (!run) return home();
+  const i = run.res.length;
+  if (i >= run.list.length) return finish();
+  const it = run.list[i], p = probOf(it), hard = it.lv >= 3;
+  if (!p) { toast("問題を作れませんでした"); return home(); }
+  const saved = run.cur && run.cur.i === i ? run.cur : null, ok = saved && valid(p, saved);
+  cur = { i, date: run.date, id: run.id, it, p, hard, done: false, hist: [],
+    put: ok ? saved.put.map((row) => row.slice()) : emptyPut(p), hint: ok ? saved.hint.map((x) => x.slice()) : [], hints: ok ? saved.hints : 0, moves: ok ? saved.moves : 0 };
+  const label = run.mode === "h" ? "上級" : run.mode === "p" ? `練習・${p.name}` : p.name;
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="もどる">←</button>
+      <div class="dots" aria-label="${i + 1}問目／${run.list.length}問">${run.list.map((_, j) => `<i class="${j < i ? "done" : j === i ? "on" : ""}"></i>`).join("")}</div>
+      <span style="font-size:13px;color:var(--ink2)">${label} ${i + 1}/${run.list.length}</span></header>
+    <p class="ask" id="ask" data-a11y-say></p>
+    <div class="board" id="board"></div>
+    <div class="legend"><span><b style="color:#ffe27a">◎</b> 点ける</span><span><b style="color:#ff9a9a">×</b> 消したまま</span><span><b style="color:#e8a25a">━</b> 導線</span><span><b style="color:#8a93b3">■</b> かべ</span><span><b style="color:#ffcf4a">┆</b> ヒント</span></div>
+    <div class="status"><span id="left" data-a11y-say></span>${hard ? "<span>ヒントなし</span>" : `<button class="sub" id="hint" style="min-height:44px;padding:0 14px">ヒント</button>`}</div>
+    <div class="row"><button class="sub" id="undo">ひとつ戻す</button><button class="sub" id="clear">全部はずす</button></div>
+    <button class="main" id="answer">スイッチを入れる</button>
+    <div id="after" aria-live="polite"></div>`;
+  $("back").onclick = home;
+  $("undo").onclick = undo;
+  $("clear").onclick = clear;
+  $("answer").onclick = deliver;
+  if ($("hint")) $("hint").onclick = hint;
+  paint();
+  window.scrollTo(0, 0);
+}
+// 保存してあった置き方が、この問題で正しいか（空いたますだけ・導線は1・ヒントの導線は置いた導線の中）
+function valid(p, c) {
+  if (!c || !Array.isArray(c.put) || !Array.isArray(c.hint)) return false;
+  if (![c.hints, c.moves].every((x) => Number.isInteger(x) && x >= 0) || c.hints > 2 || c.hint.length > c.hints) return false;
+  if (c.put.length !== p.H || !c.put.every((row, r) => Array.isArray(row) && row.length === p.W && row.every((v, k) => v === 0 || (v === 1 && p.cell[r][k] === 0)))) return false;
+  const seen = new Set();
+  for (const h of c.hint) { if (!Array.isArray(h) || h.length !== 2 || !Number.isInteger(h[0]) || !Number.isInteger(h[1]) || h[0] < 0 || h[0] >= p.H || h[1] < 0 || h[1] >= p.W) return false; const k = h[0] + ":" + h[1]; if (seen.has(k) || !c.put[h[0]][h[1]]) return false; seen.add(k); }
+  return true;
+}
+const same = (r) => r && cur && r.date === cur.date && r.id === cur.id && r.res.length === cur.i && JSON.stringify(r.list[cur.i]) === JSON.stringify(cur.it);
+// 同じ問題で保存済みの回数が同じか多ければ、古いタブの置き方で上書きしない（ヒントの導線と数をそのまま残す）
+function keep() { cur.moves++; save((s) => { const r = s.runs[MODE], old = r && r.cur && r.cur.i === cur.i ? r.cur : null; if (same(r) && !(old && old.moves >= cur.moves)) { if (old) mergeHint(cur, old); r.cur = { i: cur.i, put: cur.put, hint: cur.hint, hints: cur.hints, moves: cur.moves }; } }); }
+const isWin = () => T.solved(cur.p, cur.put);
+const nWires = () => T.count(cur.put);
+// 豆電球の明るさの言葉（電池1こ・豆電球1このときを「明るい」とする）
+const brightWord = (a) => (!T.lit(a) ? "消えている" : a > 0.99 ? "明るい" : a > 0.6 ? "少し暗い" : "暗い");
+// 回路のしくみ：完成した回路に、直列（暗い豆電球）・並列（明るい豆電球が2こ以上）があるか
+function learnOf(p, e) {
+  const on = p.dev.map((d, i) => (d.t === "L" && T.lit(e.amp[i]) ? e.amp[i] : null)).filter((a) => a !== null);
+  return { series: on.some((a) => a < 0.99), parallel: on.filter((a) => a > 0.99).length >= 2 };
+}
+// 盤の大きさ：横は画面の幅に合わせ、1ますは52pxまで（幅320pxの6列でも40px以上）
+function geom() {
+  const p = cur.p, bw = $("board") ? $("board").clientWidth : 0, avail = Math.max(250, bw || Math.min(460, document.documentElement.clientWidth) - 34), pad = 10;
+  const cs = Math.min(52, (avail - 2 * pad) / p.W), W = cs * p.W + 2 * pad, H = cs * p.H + 2 * pad;
+  return { W, H, cs, pad, x: (c) => pad + cs * (c + 0.5), y: (r) => pad + cs * (r + 0.5) };
+}
+function board(e) {
+  const p = cur.p, G = geom(), cs = G.cs, f = (v) => v.toFixed(1), out = [];
+  out.push(`<svg viewBox="0 0 ${f(G.W)} ${f(G.H)}" role="img" aria-label="${p.W}×${p.H}の盤。電池1こ・豆電球${p.dev.length - 1}こ">`);
+  out.push(`<g fill="#ffffff07" stroke="#ffffff1a" stroke-width="1">`);
+  for (let r = 0; r < p.H; r++) for (let c = 0; c < p.W; c++) out.push(`<rect x="${f(G.pad + cs * c)}" y="${f(G.pad + cs * r)}" width="${f(cs)}" height="${f(cs)}"/>`);
+  out.push(`</g>`);
+  for (let r = 0; r < p.H; r++) for (let c = 0; c < p.W; c++) if (p.cell[r][c] === 1) { const cx = G.x(c), cy = G.y(r); out.push(`<rect class="wall" x="${f(cx - cs * 0.4)}" y="${f(cy - cs * 0.4)}" width="${f(cs * 0.8)}" height="${f(cs * 0.8)}" rx="${f(cs * 0.14)}" fill="#3a4160" stroke="#555f86" stroke-width="2"/>`); }
+  // 導線：となりの導線と、口がこのますに向いた電池・豆電球へ線を引く。電気が流れているとき明るく、ショートのとき赤
+  const wireCol = e.short ? "#ff6b6b" : e.closed ? "#ffb35c" : "#b9814a";
+  const port = new Set(); p.dev.forEach((d) => T.sides(d).forEach(([r, c]) => port.add(r * p.W + c + ":" + d.r + ":" + d.c)));
+  out.push(`<g class="wires${e.short ? " short" : ""}" stroke="${wireCol}" stroke-width="${f(Math.max(5, cs * 0.14))}" stroke-linecap="round" fill="${wireCol}">`);
+  for (let r = 0; r < p.H; r++) for (let c = 0; c < p.W; c++) {
+    if (!cur.put[r][c]) continue;
+    const cx = G.x(c), cy = G.y(r);
+    out.push(`<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(Math.max(3, cs * 0.09))}" stroke="none"/>`);
+    for (let d = 0; d < 2; d++) { const nr = r + T.DY[d], nc = c + T.DX[d]; if (nr < p.H && nc < p.W && cur.put[nr][nc]) out.push(`<line x1="${f(cx)}" y1="${f(cy)}" x2="${f(G.x(nc))}" y2="${f(G.y(nr))}"/>`); }
+    for (const dv of p.dev) if (port.has(r * p.W + c + ":" + dv.r + ":" + dv.c)) out.push(`<line x1="${f(cx)}" y1="${f(cy)}" x2="${f((cx + G.x(dv.c)) / 2)}" y2="${f((cy + G.y(dv.r)) / 2)}"/>`);
+  }
+  out.push(`</g>`);
+  // 電池と豆電球（口の向きに短い足）
+  p.dev.forEach((d, i) => {
+    const cx = G.x(d.c), cy = G.y(d.r), [a, b] = T.sides(d), ax = (G.x(a[1]) - cx) / 2, ay = (G.y(a[0]) - cy) / 2;
+    out.push(`<g stroke="#9aa6c8" stroke-width="3" stroke-linecap="round"><line x1="${f(cx + ax * 0.55)}" y1="${f(cy + ay * 0.55)}" x2="${f(cx + ax)}" y2="${f(cy + ay)}"/><line x1="${f(cx - ax * 0.55)}" y1="${f(cy - ay * 0.55)}" x2="${f(cx - ax)}" y2="${f(cy - ay)}"/></g>`);
+    if (d.t === "B") {
+      const w = d.o === 0 ? cs * 0.62 : cs * 0.44, h = d.o === 0 ? cs * 0.44 : cs * 0.62;
+      out.push(`<g class="battery"><rect x="${f(cx - w / 2)}" y="${f(cy - h / 2)}" width="${f(w)}" height="${f(h)}" rx="${f(cs * 0.08)}" fill="#2d3550" stroke="#9aa6c8" stroke-width="2"/>`
+        + `<text x="${f(cx + ax * 0.42)}" y="${f(cy + ay * 0.42 + cs * 0.1)}" fill="#ffd45a" font-size="${f(cs * 0.3)}" font-weight="800" text-anchor="middle">+</text>`
+        + `<text x="${f(cx - ax * 0.42)}" y="${f(cy - ay * 0.42 + cs * 0.1)}" fill="#c8d0e8" font-size="${f(cs * 0.3)}" font-weight="800" text-anchor="middle">−</text></g>`);
+    } else {
+      const amp = e.amp[i], on = T.lit(amp), k = Math.min(1, amp), rr = cs * 0.26;
+      const fill = on ? `rgba(255,226,122,${(0.35 + 0.65 * k).toFixed(2)})` : "#2a3047";
+      out.push(`<g class="bulb${on ? " lit" : ""}${d.want ? " want" : " avoid"}" data-amp="${amp.toFixed(3)}">`
+        + `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(rr)}" fill="${fill}" stroke="${d.want ? "#ffe27a" : "#ff9a9a"}" stroke-width="2.5"${on ? ` style="filter:drop-shadow(0 0 ${f(4 + 10 * k)}px #ffe27a)"` : ""}/>`
+        + (d.want ? `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(rr * 0.45)}" fill="none" stroke="${on ? "#7a5a00" : "#ffe27a"}" stroke-width="2"/>`
+          : `<g stroke="${on ? "#a00" : "#ff9a9a"}" stroke-width="2.5" stroke-linecap="round"><line x1="${f(cx - rr * 0.45)}" y1="${f(cy - rr * 0.45)}" x2="${f(cx + rr * 0.45)}" y2="${f(cy + rr * 0.45)}"/><line x1="${f(cx + rr * 0.45)}" y1="${f(cy - rr * 0.45)}" x2="${f(cx - rr * 0.45)}" y2="${f(cy + rr * 0.45)}"/></g>`)
+        + `</g>`);
+    }
+  });
+  // ヒントの導線（動かせない）：ますを点線の枠で囲む
+  cur.hint.forEach(([r, c]) => out.push(`<rect class="hintw" x="${f(G.pad + cs * c + 3)}" y="${f(G.pad + cs * r + 3)}" width="${f(cs - 6)}" height="${f(cs - 6)}" rx="6" fill="none" stroke="#ffcf4a" stroke-width="2" stroke-dasharray="5 4"/>`));
+  // 押す所（ます全体。透明の四角）
+  const nameOf = (r, c) => { const v = p.cell[r][c]; if (v === 1) return "かべ"; if (v === 2) { const i = p.dev.findIndex((d) => d.r === r && d.c === c), d = p.dev[i]; return d.t === "B" ? `電池（${d.o === 0 ? "左が＋" : "上が＋"}）` : `豆電球${d.want ? "◎点ける" : "×消したまま"}・${brightWord(e.amp[i])}`; } return cur.put[r][c] ? (has(cur.hint, r, c) ? "ヒントの導線" : "導線") : "空き"; };
+  for (let r = 0; r < p.H; r++) for (let c = 0; c < p.W; c++) out.push(`<rect class="hit" data-r="${r}" data-c="${c}" x="${f(G.pad + cs * c)}" y="${f(G.pad + cs * r)}" width="${f(cs)}" height="${f(cs)}" tabindex="0" role="button" aria-label="${r + 1}段目・左から${c + 1}番目（${nameOf(r, c)}）"/>`);
+  out.push("</svg>");
+  return out.join("");
+}
+function paint() {
+  const p = cur.p, e = T.evaluate(p, cur.put), n = nWires(), win = isWin();
+  $("ask").innerHTML = `◎を全部点け、×は消したまま（いちばん少ないと導線 <b>${p.d}本</b>）`;
+  $("board").innerHTML = board(e);
+  $("board").classList.toggle("win", cur.done);
+  $("board").querySelectorAll(".hit").forEach((el) => { el.onclick = () => toggle(+el.dataset.r, +el.dataset.c); el.onkeydown = (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); toggle(+el.dataset.r, +el.dataset.c); } }; });
+  const want = p.dev.filter((d) => d.t === "L" && d.want).length, okOn = p.dev.filter((d, i) => d.t === "L" && d.want && T.lit(e.amp[i])).length, badOn = p.dev.filter((d, i) => d.t === "L" && !d.want && T.lit(e.amp[i])).length;
+  const why = e.short ? "・ショート！（豆電球を通らずに＋と−がつながっている）" : badOn ? "・×の豆電球が点いている" : "";
+  $("left").innerHTML = cur.done ? "" : `導線 <b>${n}</b>本・◎ ${okOn}/${want}${why}${cur.hints ? `・ヒント ${cur.hints}` : ""}`;
+  $("left").classList.toggle("warn", !!e.short);
+  const ready = !cur.done && win;
+  $("answer").disabled = !ready;
+  $("answer").style.opacity = ready ? "" : ".45";
+  $("answer").textContent = ready ? `スイッチを入れる（導線${n}本）` : "スイッチを入れる";
+  const free = cur.put.some((row, r) => row.some((v, c) => v && !has(cur.hint, r, c)));
+  $("undo").disabled = cur.done || !cur.hist.length;
+  $("clear").disabled = cur.done || !free;
+  if ($("hint")) $("hint").disabled = cur.done || cur.hints >= 2;
+  return e;
+}
+function toggle(r, c) {
+  if (cur.done) return;
+  const v = cur.p.cell[r][c];
+  if (v === 1) return toast("かべには置けません");
+  if (v === 2) return toast("電池や豆電球の上には置けません");
+  if (has(cur.hint, r, c)) return toast("ヒントの導線は動かせません");
+  cur.hist.push([r, c, cur.put[r][c]]);
+  cur.put[r][c] = cur.put[r][c] ? 0 : 1;
+  buzz(); keep();
+  const e = paint();
+  if (e.short) { toast("ショート！豆電球が点きません"); save((s) => { s.learn = s.learn || {}; s.learn.short = (s.learn.short || 0) + 1; }); }
+  else if (isWin()) toast("◎が全部点きました");
+}
+function undo() { if (cur.done) return; const h = cur.hist.pop(); if (!h) return; if (!has(cur.hint, h[0], h[1])) cur.put[h[0]][h[1]] = h[2]; keep(); paint(); }
+function clear() { if (cur.done) return; cur.put = cur.put.map((row, r) => row.map((v, c) => (has(cur.hint, r, c) ? v : 0))); cur.hist = []; keep(); paint(); }
+// ヒント：ヒントの導線を動かさないいちばん少ない置き方のうち、まだ置いていない導線を1本置く（電池の口に近い順）。足りていれば、余分な導線を1本はずす
+function hint() {
+  if (cur.done || cur.hard || cur.hints >= 2) return;
+  const p = cur.p, fixed = emptyPut(p);
+  cur.hint.forEach(([r, c]) => { fixed[r][c] = 1; });
+  const s = T.solve(p, fixed, 30);
+  if (!s) return toast("ヒントを出せませんでした");
+  const sol = s.put, bat = p.dev.find((d) => d.t === "B"), dist = (r, c) => Math.abs(r - bat.r) + Math.abs(c - bat.c);
+  const miss = [];
+  for (let r = 0; r < p.H; r++) for (let c = 0; c < p.W; c++) if (sol[r][c] && !cur.put[r][c]) miss.push([r, c]);
+  miss.sort((a, b) => dist(a[0], a[1]) - dist(b[0], b[1]) || a[0] - b[0] || a[1] - b[1]);
+  if (miss.length) {
+    const [r, c] = miss[0];
+    cur.put[r][c] = 1; cur.hint.push([r, c]);
+    toast(`${r + 1}段目・左から${c + 1}番目に導線`);
+  } else {
+    let extra = null;
+    for (let r = 0; r < p.H && !extra; r++) for (let c = 0; c < p.W; c++) if (cur.put[r][c] && !sol[r][c]) { extra = [r, c]; break; }
+    if (!extra) return;
+    cur.put[extra[0]][extra[1]] = 0;
+    toast(`${extra[0] + 1}段目・左から${extra[1] + 1}番目の導線は要りません`);
+  }
+  cur.hist = cur.hist.filter((h) => !has(cur.hint, h[0], h[1]));
+  cur.hints++; keep(); paint();
+}
+function deliver() {
+  if (cur.done || !isWin()) return;
+  if (!same(load().runs[MODE])) { toast("別の画面で先に進んでいます"); return play(); }
+  cur.done = true; buzz([10, 40, 10]);
+  const p = cur.p, rec = { m: nWires() - p.d, h: cur.hints }, lv = cur.it.lv, e = T.evaluate(p, cur.put), lr = learnOf(p, e);
+  let saved = false;
+  // 別のタブで同じ問題のヒントが多く保存されていたら、多いほうを記録する（古いタブで★を増やさない）
+  const s = save((s) => { const r = s.runs[MODE]; if (!same(r)) return; saved = true; if (r.cur && r.cur.i === cur.i) rec.h = Math.max(rec.h, r.cur.hints || 0); r.res.push(rec); r.cur = null; s.total++; s.cnt[lv] = (s.cnt[lv] || 0) + 1; if (one(rec)) s.perf[lv] = (s.perf[lv] || 0) + 1; s.learn = s.learn || {}; if (lr.series) s.learn.series = (s.learn.series || 0) + 1; if (lr.parallel) s.learn.parallel = (s.learn.parallel || 0) + 1; });
+  if (!saved) { cur.done = false; toast("別の画面で先に進んでいます"); return play(); }
+  cur.hints = rec.h; paint();
+  const st = starsOf(rec), r = s.runs[MODE], fin = r && r.res.length >= r.list.length;
+  const tip = lr.series ? "一本道に豆電球を2こつなぐ（直列）と、1こに流れる電気が減って暗くなります。" : lr.parallel ? "別々の道でつなぐ（並列）と、どの豆電球も電池1こ分の明るさで点きます。" : p.dev.some((d) => d.t === "L" && !d.want) ? "×の豆電球は、口をつながないか、両はしを同じ導線につなぐと電気が流れません。" : "電池の＋から出た電気は、豆電球を通って−へ戻ります。";
+  $("after").innerHTML = `<div class="verdict" role="status">
+    <div class="hd">点いた！ ${starStr(st)}</div>
+    <p class="note">${rec.m <= 0 ? `いちばん少ない導線${p.d}本で点けました。` : `導線${nWires()}本で点けました（いちばん少ないと${p.d}本）。`}${rec.h ? `ヒント${rec.h}回。` : ""}</p>
+    <p class="note tip">${tip}</p>
+    <button class="main" id="next">${fin ? "結果を見る" : "次の回路へ"}</button></div>`;
+  $("next").onclick = play;
+  const me = cur;
+  setTimeout(() => { if (cur === me && $("next")) $("next").scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 60);
+}
+function finish() {
+  const s = load(), run = s.runs[MODE];
+  if (!run) return home();
+  let first = false;
+  const rec = recOf(run);
+  let fresh = [];
+  save((s2) => {
+    first = bank(s2, run);
+    // まだ知らせていない実績を、この結果の画面で知らせる（練習で取った分もここで）
+    const got = s2.ach || {}; fresh = achDone(s2).filter((n) => !got[n]); fresh.forEach((n) => { got[n] = 1; }); s2.ach = got;
+    // 別のタブで同じモードの新しい回が始まっていたら、それは消さない
+    const c = s2.runs[MODE]; if (c && c.date === run.date && c.id === run.id) s2.runs[MODE] = null;
+  });
+  if (run.mode === "p") return result("p", run.date, false, { list: run.list, ...rec }, fresh);
+  result(run.mode, run.date, first, undefined, fresh);
+}
+// 共有の文：盤（答え）は出さない。いちばん少ない導線🟩・2本多いまで🟨・それ以上🟧、ヒントを使ったら💡
+const sq = (r) => (r.h ? "💡" : r.m <= 0 ? "🟩" : r.m <= 2 ? "🟨" : "🟧");
+function shareText(mode, k, rec) {
+  const all = rec.r.every(one);
+  return `でんき回路${mode === "h" ? " 上級" : ""} #${dayNo(k)} ${md(k)}\n${rec.r.map(sq).join("")}${all ? " 全部ぴったり" : ""}`;
+}
+function untilNext() { const n = jstNow(), ms = 864e5 - (n.getTime() % 864e5); return `${Math.floor(ms / 36e5)}時間${Math.floor((ms % 36e5) / 6e4)}分`; }
+function result(mode, k, first, prec, fresh) {
+  const s = load();
+  const list = mode === "p" ? prec.list : mode === "d" ? dailyList(k) : hardList(k);
+  const rec = mode === "p" ? prec : (mode === "d" ? s.days : s.hdays)[k];
+  if (!rec) return home();
+  const all = rec.r.every(one), text = shareText(mode, k, rec);
+  const showKofi = first && mode !== "p" && all && !s.kofi[k + mode];
+  if (showKofi) save((s2) => { s2.kofi[k + mode] = 1; });
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>でんき回路<small>${mode === "d" ? `今日の3問 #${dayNo(k)}` : mode === "h" ? "上級" : "練習"}</small></h1><span></span></header>
+    <p class="big">${all ? "全部、いちばん少ない導線で点けた！" : `${list.length}つの回路を完成させた`}</p>
+    ${fresh && fresh.length ? `<div class="newach">新しい実績：${fresh.map(esc).join("・")}</div>` : ""}
+    <div class="res">${list.map((it, j) => { const p = probOf(it), r = rec.r[j]; return `<div><span>${esc(p.name)}（${p.W}×${p.H}）<br><small style="color:var(--ink2)">導線${p.d + r.m}本／いちばん少ないと${p.d}本${r.h ? `・ヒント${r.h}` : ""}</small></span>${starStr(starsOf(r))}</div>`; }).join("")}</div>
+    ${mode !== "p" ? `<div class="share">${esc(text)}</div>
+    <button class="main" id="share">結果をシェア</button>
+    <div class="shares"><a id="toX" target="_blank" rel="noopener">Xで投稿</a><a id="toLine" target="_blank" rel="noopener">LINEで送る</a><button id="copy">コピー</button></div>
+    <p class="note">🟩いちばん少ない導線　🟨2本多いまで　🟧もっと　💡ヒント<br>次の3問まで あと <b>${untilNext()}</b></p>` : ""}
+    ${mode === "d" && k === todayKey() && !s.hdays[k] ? `<button class="main alt" id="go-h">上級に挑む</button>` : ""}
+    <div class="row"><button class="sub" id="go-p">練習する</button><button class="sub" id="go-dex">回路帳を見る</button></div>
+    ${showKofi ? `<p class="note kofi">楽しめたら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しいゲームづくりの励みになります（任意・遊ぶのはずっと無料）。</p>` : ""}
+    <p class="note"><a href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a></p>`;
+  $("back").onclick = home;
+  $("go-p").onclick = practiceMenu;
+  $("go-dex").onclick = dex;
+  if ($("go-h")) $("go-h").onclick = () => (k === todayKey() ? startRun("h") : home()); // 画面を開いたまま0時を過ぎたら、翌日の上級は始めない
+  if (mode !== "p") {
+    const withUrl = text + "\n" + SITE;
+    $("toX").href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(withUrl);
+    $("toLine").href = "https://line.me/R/share?text=" + encodeURIComponent(withUrl);
+    const copy = (t) => { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("コピーしました"), () => toast("コピーできませんでした")); };
+    $("copy").onclick = () => copy(withUrl);
+    $("share").onclick = () => { if (navigator.share) navigator.share({ text: withUrl }).catch(() => {}); else copy(withUrl); };
+  }
+}
+
+// 実績：取れたものと、まだのものの進み具合
+function ach() {
+  const L = achList(load());
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>実績<small>${L.filter((a) => a.done).length}/${L.length}</small></h1><span></span></header>
+    <div class="achs">${L.map((a) => `<div class="${a.done ? "got" : ""}"><b>${a.done ? "★" : "☆"} ${esc(a.name)}</b><small>${esc(a.desc)}</small>${a.done ? "" : `<i style="--p:${Math.round((a.cur / a.goal) * 100)}%"></i><small>${a.cur}/${a.goal}</small>`}</div>`).join("")}</div>
+    ${footer()}`;
+  $("back").onclick = home;
+  bindFooter();
+}
+// 回路帳：種類ごとの、点けた数といちばん少ない導線で点けた数
+function dex() {
+  const s = load();
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>回路帳<small>点けた回路 ${s.total}こ</small></h1><span></span></header>
+    <p class="note">回路の種類ごとに、点けた数と、いちばん少ない導線（ヒントなし）で点けた数です。練習も数えます。</p>
+    <div class="res">${LVS.map((L, lv) => { const n = s.cnt[lv] || 0, q = s.perf[lv] || 0; return `<div class="${n ? "" : "no"}"><span>${esc(L.name)}（${lvNote(L, lv)}）<br><small style="color:var(--ink2)">ぴったり ${q}回${n ? `（${Math.round((q / n) * 100)}%）` : ""}</small></span><b>${n}こ</b></div>`; }).join("")}</div>
+    ${footer()}`;
+  $("back").onclick = home;
+  bindFooter();
+}
+
+window.__dk = { achList, maxStreak, mode: () => MODE, T, LVS, dailyList, hardList, probOf, starsOf, todayKey, dayNo, shareText, streak, load, valid, learnOf, cur: () => cur, toggle: (r, c) => toggle(r, c), deliver: () => deliver(), hint: () => hint(), play: (m) => { if (m) MODE = m; play(); } };
+home();
+if ("serviceWorker" in navigator && location.protocol === "https:" && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

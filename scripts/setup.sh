@@ -45,17 +45,21 @@ node_ok || fail "Node.js $want 以上が要る（今は $(node -v 2>/dev/null ||
 (cd "$npm_dir" && npm ci --no-audit --no-fund)
 
 # Playwright のブラウザ。検査は CHROMIUM_PATH があればそれを、無ければ Playwright の置き場のものを使う
-if [ "${PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD:-}" = 1 ]; then
+# CHROMIUM_PATH があれば、取ってくるかどうかに関わらず先に確かめる（検査はそれを優先して使うので、動かないまま「準備できた」と出さない）
+if [ -n "${CHROMIUM_PATH:-}" ]; then
+  runnable "$CHROMIUM_PATH" || fail "CHROMIUM_PATH=$CHROMIUM_PATH が動かせない（ブラウザの場所を直すか、unset CHROMIUM_PATH）"
+elif [ "${PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD:-}" = 1 ]; then
   # 取ってこない環境（Claude Code のクラウドなど）は、入っているものを探す。見つからなければ止める
   pre=${PW_PREINSTALLED:-/opt/pw-browsers/chromium}   # PW_PREINSTALLED は検査（check-setup-template.sh）用
-  if [ -n "${CHROMIUM_PATH:-}" ]; then
-    runnable "$CHROMIUM_PATH" || fail "CHROMIUM_PATH=$CHROMIUM_PATH が動かせない（ブラウザの場所を直すか、unset CHROMIUM_PATH）"
-  elif runnable "$pre"; then
+  if runnable "$pre"; then
     session_env "CHROMIUM_PATH=$pre"
   else
     def=$(cd "$npm_dir" && node -e 'try{process.stdout.write(require("playwright").chromium.executablePath())}catch{}' 2>/dev/null || true)
     [ -n "$def" ] && runnable "$def" || fail "使えるブラウザが無い（PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 で取ってこない設定）。CHROMIUM_PATH にブラウザの場所を入れるか、PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD を外して入れ直す"
   fi
+elif [ "$(uname -s)" = Linux ]; then
+  # Linux はブラウザが動くのに OS のライブラリも要る（https://playwright.dev/docs/browsers#install-system-dependencies）。入れられなければここで止まる
+  (cd "$npm_dir" && npx playwright install --with-deps chromium) || fail "Chromium と OS のライブラリを入れられなかった（sudo が要る。CI と同じく npx playwright install --with-deps chromium を通す）"
 else
   (cd "$npm_dir" && npx playwright install chromium)
 fi

@@ -29,5 +29,5 @@ jobs:
         scan / scan
       # PWA の仕組みを変える PR は自動ではマージせず、CodeRabbit のレビューを読んでから手でマージ（AGENTS.md。shared-workflows incidents/2026-11-01-roppo-merged-before-review.md）
       hold_paths: '^(sw\.js|manifest\.webmanifest)$'
-      dispatch: qa.yml
+      dispatch: qa.yml secret-scan.yml
       recheck_main: false

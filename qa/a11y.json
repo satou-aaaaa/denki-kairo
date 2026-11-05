@@ -1,0 +1,7 @@
+{
+  "screens": [
+    { "name": "今日の3問", "click": ["#go-d"] },
+    { "name": "練習", "click": ["#go-p"] },
+    { "name": "部屋帳", "click": ["#go-dex"] }
+  ]
+}

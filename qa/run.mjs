@@ -125,9 +125,9 @@ check("画面にお笑いの言葉を入れない（本物っぽく）", !/お�
   const shell = JSON.parse(sw.match(/SHELL = (\[[^\]]+\])/)[1].replace(/'/g, '"'));
   const need = ["./index.html", "./gen.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-512-maskable.png"];
   const local = [...html.matchAll(/<script src="([^"]+)"/g)].map((m) => "./" + m[1]);
-  check("PWA：ネットの返事の保存は、イベントの中で waitUntil に預ける（遅れて届いた新しい版も保存できる）", /e\.waitUntil\(Promise\.race\(\[net\.then[^\n]*wait\(15000\)[^\n]*wait\(60000\)\]\)\)/.test(sw));
+  check("PWA：ネットの返事の保存は、イベントの中で waitUntil に預ける（遅れて届いた新しい版も保存できる）", /e\.waitUntil\(new Promise\(\(r\) => \{ saved = r; \}\)\)/.test(sw));
   check("PWA：sw.js は画面のファイルを全部保存し（画面が読むスクリプトも全部）、外へ何も送らない", need.concat(local).every((f) => shell.includes(f)) && !/https?:\/\//.test(sw.replace(/^\/\/.*$/gm, "")));
-  check("PWA：保存が無く通信も返らなくても、60秒で必ず返事をする", /setTimeout\(\(\) => fromCache\(\)\.then\(\(hit\) => send\(hit \|\| Response\.error\(\)\)\), 60000\)/.test(sw));
+  check("PWA：保存が無く通信も返らなくても、60秒で必ず返事をする", /cap = setTimeout\(\(\) => \{ send\(Response\.error\(\)\); saved\(\); \}, LIMIT\)/.test(sw) && /const LIMIT = 60000;/.test(sw));
   check("PWA：manifest にアイコン2つと名前がある", mf.name === "でんき回路" && mf.icons.length >= 2 && mf.start_url === "./");
   check("PWA：maskable のアイコンは絵を縮めた別の画像（丸く切られても欠けない。2026-11-05 CodeRabbit）", mf.icons.some((i) => i.purpose === "maskable" && i.src === "icon-512-maskable.png") && !mf.icons.some((i) => i.purpose === "maskable" && i.src === "icon-512.png")); }
 { const src = html + readFileSync(path.join(root, "gen.js"), "utf8");

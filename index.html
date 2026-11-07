@@ -344,7 +344,9 @@ const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const footer = () => `<footer><a href="#" id="f-how">遊び方</a><a href="#" data-a11y-open>見やすさ</a><a href="#" data-hk>引き継ぎ</a><a href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`;
 function bindFooter() { const h = $("f-how"); if (h) h.onclick = (e) => { e.preventDefault(); openHow(); }; }
 function openHow() { $("fb2").href = FEEDBACK; const d = $("howto"); if (d.showModal) d.showModal(); else d.setAttribute("open", ""); }
-$("howto-ok").onclick = () => { const d = $("howto"); d.close ? d.close() : d.removeAttribute("open"); save((s) => { s.tut = true; }); };
+$("howto").addEventListener("cancel", () => { if (!load().tut) save((s) => { s.tut = true; }); }); // Esc を押したその場で「見た」を残す（close の知らせは遅れて届き、すぐ読み直すと間に合わない）
+$("howto").addEventListener("close", () => { if (!load().tut) save((s) => { s.tut = true; }); }); // Esc で閉じても「見た」を残す
+$("howto-ok").onclick = () => { save((s) => { s.tut = true; }); const d = $("howto"); d.close ? d.close() : d.removeAttribute("open"); }; // 押したらすぐ残す（close の知らせは少し遅れて届くので、すぐ読み直すと間に合わない）
 // ホームの小さな回路（飾り）：電池と豆電球2こを並列につないだ形
 const DEMO = `<svg viewBox="0 0 220 110" width="220" height="110" aria-hidden="true" style="display:block;margin:0 auto"><g fill="none" stroke="#e8a25a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><polyline points="40,30 40,12 180,12 180,40"/><polyline points="40,80 40,98 180,98 180,70"/><polyline points="110,12 110,40"/><polyline points="110,98 110,70"/></g><rect x="26" y="34" width="28" height="42" rx="6" fill="#2d3550" stroke="#9aa6c8" stroke-width="2"/><text x="40" y="50" fill="#ffd45a" font-size="15" font-weight="800" text-anchor="middle">+</text><text x="40" y="70" fill="#9aa6c8" font-size="15" font-weight="800" text-anchor="middle">−</text><g style="filter:drop-shadow(0 0 8px #ffe27a)"><circle cx="110" cy="55" r="15" fill="#ffe27a" stroke="#fff" stroke-width="2"/><circle cx="180" cy="55" r="15" fill="#ffe27a" stroke="#fff" stroke-width="2"/></g></svg>`;
 

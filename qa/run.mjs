@@ -411,6 +411,31 @@ try {
     const sample = { "denki-kairo-v1": JSON.stringify({ v: 1, tut: true, days: { "2026-11-04": { m: [0, 1, 0] } }, hdays: {}, cnt: { 0: 3, 1: 2 }, perf: {}, total: 5, runs: {}, kofi: {}, ach: {}, t: 1 }) };
     await checkTransfer({ browser, url, game: "denki-kairo", sample, check, open: async (page) => { await page.evaluate(() => { const d = document.getElementById("howto"); if (d.open) d.close(); }); } });
   }
+  // 保存できないとき：帯 #savewarn でちょうど1つ知らせ、2秒たっても残り、保存できるようになったら消える（2026-11-17。黙って記録が消えないように）
+  {
+    const cw = await browser.newContext({ viewport: { width: 390, height: 800 } });
+    await cw.addInitScript(() => { window.__origSetItem = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error("full"); }; });
+    const pw = await cw.newPage(); await pw.goto(url); await pw.waitForTimeout(300);
+    const nW = () => pw.evaluate(() => document.querySelectorAll("#savewarn").length);
+    if (!(await pw.isVisible("#howto-ok"))) await pw.click("#f-how");
+    await pw.click("#howto-ok"); await pw.waitForTimeout(100);
+    const n1 = await nW(), txt = await pw.evaluate(() => (document.getElementById("savewarn") || {}).textContent || "");
+    await pw.waitForTimeout(2000); const n2 = await nW();
+    await pw.evaluate(() => { Storage.prototype.setItem = window.__origSetItem; });
+    await pw.click("#f-how"); await pw.click("#howto-ok"); await pw.waitForTimeout(100); const n3 = await nW();
+    check("保存できないブラウザで遊ぶと、帯（#savewarn）でちょうど1つ知らせ、2秒たっても残る・保存できるようになったら消える", n1 === 1 && n2 === 1 && txt.includes("保存できませんでした") && n3 === 0, JSON.stringify([n1, n2, n3, txt]));
+    await cw.close();
+  }
+  // 知らせ（.toast）が出ているあいだも、その下のボタンを押せる（2026-11-17。知らせがボタンをふさがないように）
+  {
+    const ct = await browser.newContext({ viewport: { width: 390, height: 800 } });
+    const pt = await ct.newPage(); await pt.goto(url); await pt.waitForTimeout(300);
+    const at = await pt.evaluate(() => { const d = document.getElementById("howto"); if (d && d.open && d.close) d.close(); toast("おしらせの検査"); const t = [...document.querySelectorAll(".toast")].pop(), r = t.getBoundingClientRect(), b = document.createElement("button"); b.id = "qa-under"; b.textContent = "下"; b.style.cssText = "position:fixed;left:0;bottom:0;width:100%;height:" + (innerHeight - r.top + 10) + "px;z-index:1"; b.onclick = () => { b.dataset.hit = "1"; }; document.body.appendChild(b); return { x: r.left + r.width / 2, y: r.top + r.height / 2, pe: getComputedStyle(t).pointerEvents }; });
+    await pt.mouse.click(at.x, at.y); await pt.waitForTimeout(50);
+    const hit = await pt.evaluate(() => { const b = document.getElementById("qa-under"), on = !!document.querySelector(".toast"), h = b.dataset.hit === "1"; b.remove(); return on && h; });
+    check("知らせ（.toast）が出ているあいだも、その下のボタンを押せる（pointer-events:none）", at.pe === "none" && hit, JSON.stringify(at));
+    await ct.close();
+  }
 } catch (e) {
   check("QA の操作が最後まで完了する", false, e.message.split("\n")[0]);
 } finally {

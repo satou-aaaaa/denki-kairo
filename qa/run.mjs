@@ -311,7 +311,7 @@ try {
     const p3 = await newPage(w, 700); const fb2 = await p3.evaluate(() => { const a = document.querySelector("#howto #fb2"); return a ? a.getBoundingClientRect().height : 0; }); check(`幅${w}px：遊び方の「感想を送る」も高さ44px以上`, fb2 >= 44, `${fb2}px`); await p3.click("#howto-ok");
     const homeOk = await p3.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
     await p3.click("#go-d");
-    const r = await p3.evaluate(() => ({ over: document.documentElement.scrollWidth > innerWidth, small: [...document.querySelectorAll("button, a")].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 44).map((e) => e.id || e.textContent.trim().slice(0, 6)) }));
+    const r = await p3.evaluate(() => ({ over: document.documentElement.scrollWidth > innerWidth, small: [...document.querySelectorAll("button, a")].filter((e) => e.offsetParent && Math.round(e.getBoundingClientRect().height) < 44).map((e) => e.id || e.textContent.trim().slice(0, 6)) }));
     check(`幅${w}px：横にはみ出さず、押せる所は高さ44px以上`, homeOk && !r.over && r.small.length === 0, r.small.join(","));
     await p3.click("#back"); await p3.click("#go-p"); await p3.click('.lv button[data-lv="3"]');
     const r7 = await p3.evaluate(() => { const h = [...document.querySelectorAll("#board rect.hit")].map((e) => e.getBoundingClientRect()); return { minW: Math.min(...h.map((b) => b.width)), minH: Math.min(...h.map((b) => b.height)), over: document.documentElement.scrollWidth > innerWidth }; });

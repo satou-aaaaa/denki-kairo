@@ -257,7 +257,7 @@ try {
   const share = await page.textContent(".share");
   const r3 = await page.evaluate(() => { const g = window.__dk; return g.load().days[g.todayKey()].r; });
   check("3問で結果・シェアの文は番号と色だけ", /でんき回路 #\d+/.test(share) && /^💡🟩🟩/.test(share.split("\n")[1] || "") && r3.length === 3 && r3[0].m === 0 && r3[0].h === 2);
-  check("X・LINE は押したときに開くリンクだけ", /^https:\/\/twitter\.com\/intent\/tweet\?text=/.test(await page.getAttribute("#toX", "href")) && /^https:\/\/line\.me\/R\/share\?text=/.test(await page.getAttribute("#toLine", "href")));
+  check("X・LINE は押したときに開くリンクだけ", /^https:\/\/(?:x|twitter)\.com\/intent\/tweet\?text=/.test(await page.getAttribute("#toX", "href")) && /^https:\/\/line\.me\/R\/share\?text=/.test(await page.getAttribute("#toLine", "href")));
   check("結果に3つの回路と導線の数が出る", (await page.locator(".res div").count()) === 3 && (await page.textContent(".res")).includes(`いちばん少ないと${c.p.d}本`));
   check("ヒントを使った日は Ko-fi のひとことを出さない", (await page.locator(".kofi").count()) === 0);
   check("今日の3問を終えると、取れた実績が結果に出る", (await page.textContent(".newach")).includes("はじめての明かり"));

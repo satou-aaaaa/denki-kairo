@@ -745,7 +745,7 @@ const achDone = (s) => achList(s).filter((a) => a.done).map((a) => a.name);
 
 // ---- 画面 ----
 const md = Core.md;
-function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }
+function toast(t) { Core.toast(t); } // 知らせの帯（共通部品 game-core。読み上げにも届け、重ねて出さない）
 const buzz = Core.buzz; // 共通部品 game-core（「動きを減らす」では震わせない）
 const esc = Core.esc; // 共通部品 game-core（" と ' も変える。属性の中でも切れない）
 const footer = () => `<footer><a href="#" id="f-how">遊び方</a><a href="#" data-a11y-open>見やすさ</a><a href="#" data-hk>引き継ぎ</a><a href="${FEEDBACK}" data-feedback="fun" target="_blank" rel="noopener">感想を送る</a><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`;
@@ -1041,7 +1041,7 @@ function shareText(mode, k, rec) {
   const all = rec.r.every(one);
   return `でんき回路${mode === "h" ? " 上級" : ""} #${dayNo(k)} ${md(k)}\n${rec.r.map(sq).join("")}${all ? " 全部ぴったり" : ""}`;
 }
-function untilNext() { const n = jstNow(), ms = 864e5 - (n.getTime() % 864e5); return `${Math.floor(ms / 36e5)}時間${Math.floor((ms % 36e5) / 6e4)}分`; }
+function untilNext() { return Core.untilNext(); } // 次の回までの時間（共通部品 game-core）
 function result(mode, k, first, prec, fresh) {
   Core.screens.mark("result"); // 「戻る」でホームへ（sync-template の migrateBack）
   const s = load();

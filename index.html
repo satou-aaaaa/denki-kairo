@@ -106,7 +106,7 @@ footer a{color:var(--ink2);min-height:44px;display:inline-flex;align-items:cente
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <script src="transfer.js" data-game="denki-kairo" data-keys="denki-kairo-v1"></script>
-<!-- a11y:begin 見やすさの設定 v9（shared-workflows template/a11y/a11y.html の写し。ここでは直さず、ひな形を直して全部のゲームへ写す。drift-check と qa/a11y.mjs が同じ中身か見る） -->
+<!-- a11y:begin 見やすさの設定 v10（shared-workflows template/a11y/a11y.html の写し。ここでは直さず、ひな形を直して全部のゲームへ写す。drift-check と qa/a11y.mjs が同じ中身か見る） -->
 <style id="a11y-css">
 /* だれでも：キーボードで選んだ所に太い枠（WCAG 2.4.7・2.4.13） */
 :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #1a5fd0!important;outline-offset:2px!important;box-shadow:0 0 0 5px #fff!important}
@@ -151,6 +151,13 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
 .a11y-dlg .a11y-opts label:has(input:checked){background:#1d2320;color:#fff}
 .a11y-dlg .a11y-opts label:focus-within{outline:3px solid #1a5fd0;outline-offset:2px}
 .a11y-dlg .a11y-opts input{width:18px;height:18px;margin:0;accent-color:#1a5fd0;flex:none}
+/* 暗い画面（v10）：設定の画面と「Aa」「🔊 読む」も暗くする（白地に黒と同じ 14:1 前後） */
+html.a11y-dark .a11y-dlg{background:#1c2124;color:#eceae4;border-color:#eceae4}
+html.a11y-dark .a11y-dlg p,html.a11y-dark .a11y-dlg label small,html.a11y-dark .a11y-dlg legend small{color:#c3c8cb}
+html.a11y-dark .a11y-dlg label,html.a11y-dark .a11y-dlg fieldset{border-top-color:#eceae433}
+html.a11y-dark .a11y-dlg button,html.a11y-dark .a11y-btn,html.a11y-dark .a11y-saybtn,html.a11y-dark .a11y-dlg .a11y-opts label{background:#262c30;color:#eceae4;border-color:#eceae4}
+html.a11y-dark .a11y-dlg button.a11y-ok,html.a11y-dark .a11y-dlg .a11y-opts label:has(input:checked){background:#eceae4;color:#1c2124}
+html.a11y-dark :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline-color:#8ab4ff!important;box-shadow:0 0 0 5px #000!important}
 </style>
 <script id="a11y-script">
 /* 見やすさの設定（色覚・ディスレクシア・弱視・動きに弱い人のため）。外へは何も送らない。
@@ -168,7 +175,12 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
      前のゲームごとの設定（〇〇-fs）は A11y.fsFrom("〇〇-fs", 既定の値) で引き継ぐ（共通の設定をまだ選んでいなければ、その値を使う）
    - 音は Web Audio の出口（AudioContext の destination）に音量のつまみを1つはさむので、ゲームの側は何もしなくてよい
      （WCAG 1.4.2 Audio Control・Xbox Accessibility Guideline 105）。音量は A11y.get("vol")（0 なし・1 小・2 ふつう）
-   - 選ぶ行を足すときは CHOICES に1行足す（名前・見出し・説明・選択肢・既定の値・出す条件） */
+   - 選ぶ行を足すときは CHOICES に1行足す（名前・見出し・説明・選択肢・既定の値・出す条件）
+   v10（2026-11-27）：「画面の明るさ」（自動・明るい・暗い）。自動は端末のダークモード（prefers-color-scheme）に合わせる。暗いときは html に a11y-dark。
+   - ゲームごとの色を書き直さずに暗くする（下の「暗い画面」）。:root の色の変数と決め打ちの明るい地の明るさを裏返し（OKLCH の L。色合いは残すので色覚の見分けは崩さない）、
+     字がうしろと 4.5:1（大きい字は 3:1）に足りなければ足りるまで明るくする（WCAG 1.4.3。web.dev「prefers-color-scheme」・Chrome「Dark mode」の指針）。
+   - 色を変えたくない所は data-a11y-keepcolor を付ける。ゲームが自分で html.a11y-dark の色を CSS に書いてもよい（書いた色の上でも字の濃さは合わせる）
+   - A11y.dark() で今が暗い画面か分かる。canvas に描く色はゲームの側で A11y.dark() を見て変える */
 (() => {
   const KEY = "a11y-v1";
   const root = document.documentElement;
@@ -182,6 +194,7 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
   // 選ぶ行：[名前, 見出し, 説明, [[値, 字], …], 既定の値, 出す条件（無ければいつも）]
   const CHOICES = [
     ["fs", "文字の大きさ", "画面の文字を小さく・大きく", [[1, "小"], [2, "中"], [3, "大"]], 2],
+    ["theme", "画面の明るさ", "自動は端末のダークモードの設定に合わせる", [[0, "自動"], [1, "明るい"], [2, "暗い"]], 0],
     ["vol", "音", "効果音の大きさ", [[0, "なし"], [1, "小"], [2, "ふつう"]], 2, () => hasSound()],
     // 長く遊んだら知らせる（分。0 は知らせない）。数えて知らせるのは共通部品 kiroku（template/kiroku/kiroku.js）。60 分は厚生労働省「情報機器作業における労働衛生管理のためのガイドライン」
     ["rest", "長く遊んだら知らせる", "続けて遊んだ時間で、ひと休みをすすめる", [[0, "知らせない"], [30, "30分"], [60, "60分"], [90, "90分"]], 60, () => !!window.Kiroku],
@@ -246,6 +259,122 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
   // 音を使うページか（Web Audio・<audio>・<video> を使っている）。音の無いゲームでは「音」の行を出さない
   const hasSound = () => ctxs.length > 0 || !!document.querySelector("audio,video") ||
     [...document.scripts].some((t) => t.id !== "a11y-script" && /AudioContext|new Audio\(/.test(t.textContent));
+  // ---- 暗い画面（v10）----
+  // 1) :root・html に書いた色の変数のうち、明るい地の色と、暗い無彩色（字の色）の明るさを裏返す（OKLCH の L。色合いとあざやかさは残す）
+  // 2) 決め打ちの明るい地（#fff・明るいグラデーション）を、同じ色合いの暗い地にする
+  // 3) 字の色が、うしろの色（親の opacity も重ねる）と 4.5:1（大きい字は 3:1）に足りなければ、足りるまで明るくする
+  // あざやかなボタンの地（朱・藍など）と白い字はそのまま。絵・svg・canvas・設定の画面は変えない。変えたものは覚えておき、やめたら元に戻す。
+  // 画面が描き変わったら次の描画の前にもう一度合わせる（ゲームの transition で遅れて変わる地のため、変えたものがあれば 0.4 秒後にも）
+
+  const toLin = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const toSrgb = (v) => { const x = v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055; return Math.round(Math.min(1, Math.max(0, x)) * 255); };
+  const oklch = ([r, g, b]) => {
+    r = toLin(r); g = toLin(g); b = toLin(b);
+    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b), s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
+    return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, Math.hypot(A, B), Math.atan2(B, A)];
+  };
+  const rgb = ([L, C, H]) => {
+    const A = C * Math.cos(H), B = C * Math.sin(H);
+    const l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3, m = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3, s = (L - 0.0894841775 * A - 1.291485548 * B) ** 3;
+    return [toSrgb(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s), toSrgb(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s), toSrgb(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s)];
+  };
+  const lum = (c) => 0.2126 * toLin(c[0]) + 0.7152 * toLin(c[1]) + 0.0722 * toLin(c[2]);
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const parse = (c) => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[,/\s]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
+  const css = (c, a) => (a == null || a >= 1 ? `rgb(${c[0]},${c[1]},${c[2]})` : `rgba(${c[0]},${c[1]},${c[2]},${a})`);
+  const flip = (c) => { const [L, C, H] = oklch(c); return rgb([Math.min(0.94, Math.max(0.17, 1.1 - L)), C * 0.85, H]); };
+  const over = (t, b) => { const a = t[3] + b[3] * (1 - t[3]); return a === 0 ? [0, 0, 0, 0] : [0, 1, 2].map((i) => (t[i] * t[3] + b[i] * b[3] * (1 - t[3])) / a).concat(a); };
+    const SKIP = "svg,canvas,img,video,picture,iframe,.a11y-dlg,[data-a11y-keepcolor]";
+  let changed = new Map(); // 要素 → 変える前の { prop: [値, 優先] }
+  const put = (el, prop, val) => {
+    let o = changed.get(el); if (!o) { o = {}; changed.set(el, o); }
+    if (!(prop in o)) o[prop] = [el.style.getPropertyValue(prop), el.style.getPropertyPriority(prop)];
+    if (el.style.getPropertyValue(prop) !== val) { el.style.setProperty(prop, val, "important"); count++; }
+  };
+  let probe = null;
+  const colorOf = (raw) => { if (!probe) { probe = document.createElement("i"); probe.hidden = true; } probe.style.color = ""; probe.style.color = raw; if (!probe.style.color) return null; (document.body || root).appendChild(probe); const c = parse(getComputedStyle(probe).color); probe.remove(); return c; };
+  function vars() {
+    const names = new Set();
+    const walk = (rules) => { for (const r of rules) { if (r.cssRules && !r.selectorText) { try { walk(r.cssRules); } catch (e) { /* 読めない */ } continue; } if (r.selectorText && /(^|,)\s*(:root|html)\s*(,|$)/.test(r.selectorText)) for (const n of r.style) if (n.startsWith("--")) names.add(n); } };
+    for (const sh of document.styleSheets) { try { walk(sh.cssRules); } catch (e) { /* 別のサイトの CSS は読めない */ } }
+    for (const n of names) {
+      const raw = getComputedStyle(root).getPropertyValue(n).trim();
+      if (!raw || /var\(|gradient|url\(/.test(raw)) continue;
+      const c = colorOf(raw); if (!c || c[3] === 0) continue;
+      const [L, C] = oklch(c);
+      if (L > 0.7 || (L < 0.5 && C < 0.05)) put(root, n, css(flip(c), c[3]));
+    }
+  }
+  // うしろの不透明な色（無ければ null。うしろが絵なら測れないので null）
+  function backOf(el) {
+    let acc = [0, 0, 0, 0];
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+      const s = getComputedStyle(n), b = parse(s.backgroundColor);
+      if (s.backgroundImage !== "none" && n !== document.body && n !== root) return null;
+      if (b && b[3] > 0) { acc = over(acc, b); if (acc[3] >= 0.98) return acc; }
+    }
+    return over(acc, [18, 21, 24, 1]);
+  }
+  function grounds() {
+    for (const el of [document.body, ...document.querySelectorAll("body *")]) {
+      if (el.closest(SKIP) || el.id === "core-help") continue;
+      const s = getComputedStyle(el), b = parse(s.backgroundColor);
+      if (b && b[3] > 0.05 && oklch(b)[0] > 0.7) put(el, "background-color", css(flip(b), b[3]));
+      const g = s.backgroundImage;
+      if (g && g !== "none" && !/url\(/.test(g) && /gradient/.test(g)) {
+        const stops = (g.match(/rgba?\([^)]+\)/g) || []).map(parse).filter(Boolean);
+        if (stops.length && stops.reduce((t, c) => t + oklch(c)[0], 0) / stops.length > 0.7) put(el, "background-image", g.replace(/rgba?\([^)]+\)/g, (m) => { const c = parse(m); return css(flip(c), c[3]); }));
+      }
+    }
+  }
+  function texts() {
+    for (const el of document.querySelectorAll("body *")) {
+      if (el.closest(SKIP)) continue;
+      if (![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
+      const s = getComputedStyle(el), fg = parse(s.color), bg = backOf(el);
+      if (!fg || !bg) continue;
+      const size = parseFloat(s.fontSize), need = (size >= 24 || (+s.fontWeight >= 700 && size >= 18.66) ? 3 : 4.5) + 0.2;
+      // 親の opacity も重ねて見る（薄くした字は、薄くしたぶん明るくする）
+      let op = 1; for (let n = el; n && n !== root; n = n.parentElement) op *= +getComputedStyle(n).opacity;
+      if (op < 0.2) continue;
+      const seen = (c) => over([c[0], c[1], c[2], fg[3] * op], bg);
+      if (ratio(seen(fg), bg) >= need) continue;
+      let [L, C, H] = oklch(fg); const up = oklch(bg)[0] < 0.6;
+      let c = fg;
+      for (let i = 0; i < 60 && ratio(seen(c), bg) < need; i++) { L = up ? Math.min(1, L + 0.02) : Math.max(0, L - 0.02); if (L >= 1 || L <= 0) C *= 0.7; c = rgb([L, C, H]); }
+      put(el, "color", css(c, fg[3]));
+    }
+  }
+  let darkOn = false, mo = null, queued = false, busy = false;
+  // 地の色を変えると、ゲームの transition（.15s など）で少し遅れて暗くなる。変えたものがあれば、動きが終わったころにもう一度合わせる
+  let count = 0, again = 0;
+  const run = () => {
+    queued = false; if (!darkOn) return; busy = true;
+    const before = count;
+    try { grounds(); texts(); } finally { mo && mo.takeRecords(); busy = false; }
+    if (count > before && again < 3) { again++; setTimeout(later, 400); } else again = 0;
+  };
+  const later = () => { if (!queued && !busy) { queued = true; requestAnimationFrame(run); } };
+  function darkStart() {
+    if (darkOn) return; darkOn = true;
+    root.classList.add("a11y-dark");
+    put(root, "color-scheme", "dark");
+    vars(); run();
+    mo = new MutationObserver(later);
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden", "open"] });
+  }
+  function darkStop() {
+    if (!darkOn) return; darkOn = false;
+    if (mo) mo.disconnect(); mo = null;
+    for (const [el, o] of changed) for (const p in o) { if (o[p][0]) el.style.setProperty(p, o[p][0], o[p][1]); else el.style.removeProperty(p); }
+    changed = new Map();
+    root.classList.remove("a11y-dark");
+  }
+  
+  // 今は暗い画面か（自動は端末の設定）
+  const dark = () => { const t = get("theme"); return t === 2 || (t === 0 && media("(prefers-color-scheme: dark)")); };
+  const applyTheme = () => { if (!document.body) return; if (dark()) darkStart(); else darkStop(); };
   let fontLoaded = false;
   const loadFont = () => {
     if (fontLoaded) return; fontLoaded = true;
@@ -258,7 +387,7 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
   };
   const apply = () => {
     for (const [k] of OPTS) root.classList.toggle("a11y-" + k, on(k));
-    applyFs(); applyVol();
+    applyFs(); applyVol(); applyTheme();
     if (on("read")) loadFont();
     if (sayBtn) sayBtn.hidden = !on("say");
     if (!on("say")) stop();
@@ -358,10 +487,16 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
     const follow = () => { if (!("calm" in S)) { apply(); const c = dlg && dlg.querySelector('input[data-k="calm"]'); if (c) c.checked = on("calm"); document.dispatchEvent(new CustomEvent("a11ychange", { detail: { key: "calm", on: on("calm") } })); } };
     if (mq.addEventListener) mq.addEventListener("change", follow); else if (mq.addListener) mq.addListener(follow);
   } catch { /* matchMedia の無い端末 */ }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build); else build();
+  // 端末のダークモードを開いたあとに変えても効かせる（「自動」のときだけ）
+  try {
+    const mq = matchMedia("(prefers-color-scheme: dark)");
+    const follow = () => { if (get("theme") === 0) { applyTheme(); document.dispatchEvent(new CustomEvent("a11ychange", { detail: { key: "theme", on: dark(), value: 0 } })); } };
+    if (mq.addEventListener) mq.addEventListener("change", follow); else if (mq.addListener) mq.addListener(follow);
+  } catch { /* matchMedia の無い端末 */ }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => { build(); applyTheme(); }); else build();
   // 別のタブ・別のゲームで設定を変えたら、こちらにも効かせる
   addEventListener("storage", (e) => { if (e.key === KEY) { S = { ...load(), ...unsaved }; apply(); } });
-  window.A11y = { on, get, set, fs, fsFrom, open, say, stop };
+  window.A11y = { on, get, set, fs, fsFrom, open, say, stop, dark };
 })();
 </script>
 <!-- a11y:end -->
